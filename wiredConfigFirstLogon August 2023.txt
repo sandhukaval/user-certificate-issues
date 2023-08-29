@@ -1,0 +1,34 @@
+setlocal enabledelayedexpansion
+@echo off
+IF EXIST "%localappdata%\Temp\WiredConfigFirstLogon.txt" (
+	echo file exists
+	exit
+) ELSE (
+	set /a count=1
+	:TIMERLOOP
+	IF !count! GTR 12 (
+		rem echo no certs in folder after 12 attempts >> "%localappdata%\Temp\WiredConfigFirstLogonLOG.txt"
+		exit
+	) ELSE (
+		rem echo %date% %time% - loopnum !count! >> "%localappdata%\Temp\WiredConfigFirstLogonLOG.txt"
+		for /F %%i in ('dir /b /a "%AppData%\Microsoft\SystemCertificates\My\Certificates\*"') do (
+			echo %date% %time% - %AppData%\Microsoft\SystemCertificates\My\Certificates\ has files > "%localappdata%\Temp\WiredConfigFirstLogon.txt"
+			GOTO CERTSINFOLDER
+		)
+		REM wait 10 seconds
+		TIMEOUT /T 10 /NOBREAK
+		set /a count+=1
+		GOTO TIMERLOOP
+	)
+
+	:CERTSINFOLDER
+	rem echo %date% %time% - service stop >> "%localappdata%\Temp\WiredConfigFirstLogonLOG.txt"
+	net stop dot3svc
+	TIMEOUT /T 3 /NOBREAK
+	rem echo %date% %time% - service start >> "%localappdata%\Temp\WiredConfigFirstLogonLOG.txt"
+	net start dot3svc
+	rem echo %date% %time% - service stop and start attempted >> "%localappdata%\Temp\WiredConfigFirstLogonLOG.txt"
+	exit
+)
+
+exit
